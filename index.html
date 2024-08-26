@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conselho e Imagem do Dia</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="main-container">
+        <div class="container">
+            <h1>Conselho do Dia</h1>
+            <button id="obterConselhoBtn">Obter Conselho</button>
+            <div class="loader" id="loaderConselho"></div>
+            <p id="conselho"></p>
+        </div>
+
+        
+        <div class="container">
+            <h1>Imagem Aleatória de Cachorro</h1>
+            <button id="obterImagemBtn">Ver Imagem</button>
+            <div class="loader" id="loaderImagem"></div>
+            <img id="imagemCachorro" src="" alt="Imagem de Cachorro">
+        </div>
+    </div>
+
+    <script>
+        const btnConselho = document.getElementById('obterConselhoBtn');
+        const conselhoText = document.getElementById('conselho');
+        const loaderConselho = document.getElementById('loaderConselho');
+
+        const btnImagem = document.getElementById('obterImagemBtn');
+        const loaderImagem = document.getElementById('loaderImagem');
+        const imgElement = document.getElementById('imagemCachorro');
+
+        async function obterConselho() {
+            try {
+                loaderConselho.style.display = 'block';
+                conselhoText.textContent = '';
+                btnConselho.disabled = true;
+                btnConselho.textContent = 'Carregando...';
+
+                const response = await fetch('https://api.adviceslip.com/advice');
+                const data = await response.json();
+                const conselhoEmIngles = data.slip.advice;
+
+                const encodedText = encodeURIComponent(conselhoEmIngles);
+                const translationResponse = await fetch(`https://api.mymemory.translated.net/get?q=${encodedText}&langpair=en|pt`);
+                const translationData = await translationResponse.json();
+                const conselhoEmPortugues = translationData.responseData.translatedText;
+
+                conselhoText.textContent = conselhoEmPortugues;
+            } catch (error) {
+                console.error('Erro:', error);
+                conselhoText.textContent = 'Não foi possível obter o conselho. Tente novamente mais tarde.';
+            } finally {
+                loaderConselho.style.display = 'none';
+                btnConselho.disabled = false;
+                btnConselho.textContent = 'Obter Conselho';
+            }
+        }
+
+        btnConselho.addEventListener('click', obterConselho);
+
+        function buscarImagem() {
+            try {
+                loaderImagem.style.display = 'block';
+                imgElement.style.display = 'none';
+                btnImagem.disabled = true;
+                btnImagem.textContent = 'Carregando...';
+
+                const headers = new Headers({
+                    "Content-Type": "application/json",
+                    "x-api-key": "live_ZRFyfGHNipopoQ1g99qzmvUN1NOfnQ1w8qTQM776JLshoHADaZ0t5aQpZDO2PBke"
+                });
+
+                var requestOptions = {
+                    method: 'GET',
+                    headers: headers,
+                    redirect: 'follow'
+                };
+
+                fetch("https://api.thedogapi.com/v1/images/search?size=med&mime_types=jpg&format=json&has_breeds=true&order=RANDOM&page=0&limit=1", requestOptions)
+                    .then(response => response.json())
+                    .then(result => {
+                        const imgUrl = result[0].url;
+                        imgElement.src = imgUrl;
+                        imgElement.style.display = 'block';
+                    })
+                    .catch(error => console.log('error', error))
+                    .finally(() => {
+                        loaderImagem.style.display = 'none';
+                        btnImagem.disabled = false;
+                        btnImagem.textContent = 'Ver Imagem';
+                    });
+            } catch (error) {
+                console.error('Erro:', error);
+            }
+        }
+
+        btnImagem.addEventListener('click', buscarImagem);
+    </script>
+
+</body>
+</html>
